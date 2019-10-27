@@ -1,0 +1,190 @@
+<?php
+
+
+namespace m;
+
+
+class Route
+{
+    private $_settings;
+    private $_rootURL;
+    private $_routeMetadata;
+    private $_protocol;
+
+    private $_rawURL;
+    private $_path;
+    private $_controller;
+    private $_method;
+    private $_data;
+
+    public function __construct(Settings $settings)
+    {
+        $this->_settings = $settings;
+
+        $this->_rootURL = $this->_settings->rootURL();
+        $this->_rawURL = $this->_settings->currentURL();
+        $this->_routeMetadata = $this->_settings->getRoute();
+
+        $this->_protocol = self::_currentProtocol(false);
+    }
+
+    private static function _currentProtocol($appendSlashes = true)
+    {
+        $slashes = $appendSlashes ? '://' :'';
+
+        return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https$slashes" : "http$slashes";
+    }
+
+    public function construct()
+    {
+		//echo $this->_rootURL . "<----->" . $this->_rawURL;
+		
+        $this->_path = str_replace($this->_rootURL,'', $this->_rawURL);
+		
+		if(empty($this->_path))
+			$this->_path = '/';
+		
+		if($this->_path[0] !== '/')
+			$this->_path = "/{$this->_path}";
+
+        $searchPath = $this->_path;
+
+        //echo "Checking path: $searchPath<br/>";
+
+        $found = null;
+
+        $max = count(explode('/', $searchPath));
+        //echo "$max<br/>";
+
+        for($i = 0; $i < $max; $i++)
+        {
+            $found = self::_search($searchPath);
+
+            if($found === null)
+                $searchPath = self::_slicePath($searchPath, $i);
+            else
+                break;
+        }
+
+        if($found === null)
+            return false;
+
+
+        $this->_controller = $found[1];
+        $this->_method = $found[2];
+        $this->_data = self::_extractData($this->_path, $searchPath);
+
+        return true;
+    }
+
+    private static function _extractData($originalPath, $metadataPath)
+    {
+        if($originalPath === $metadataPath)
+            return null;
+
+        $lastCharIndex = (strlen($metadataPath) - 1);
+
+        $lastChar = $metadataPath[$lastCharIndex];
+
+        //echo "$originalPath  <-->  $metadataPath [$lastChar]<br/>";
+
+        if($lastChar === '*')
+            $metadataPath = substr($metadataPath, 0, $lastCharIndex);
+
+        //echo "$originalPath  <-->  $metadataPath [$lastChar]<br/>";
+
+        $dataStr = str_replace($metadataPath, '', $originalPath);
+
+        //echo "Data = $dataStr<br/>";
+
+        return $dataStr;
+    }
+
+    private function _search($path)
+    {
+        foreach($this->_routeMetadata as $r)
+        {
+            //echo "{$this->_path}  <-->  {$r[0]}<br/>";
+            if($path === $r[0])
+            {
+                return $r;
+            }
+        }
+
+        return null;
+    }
+
+    private static function _slicePath($path, $popCount, $append = '*')
+    {
+        if($popCount < 1)
+            return $path;
+
+        $split = explode('/', $path);
+
+        if($popCount >= count($split))
+            return '';
+
+        // a/b/c/d <-- delete as many as $popCount from behind
+        // a/b/c   <-- Remove from index = count - $popCount
+        for ($i = 0; $i < $popCount; $i++)
+        {
+            $delIndex = count($split) - 1;
+
+            unset($split[$delIndex]);
+        }
+
+        $rejoin = implode('/', $split);
+
+        $rejoin .= "/$append";
+
+        return $rejoin;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRawURL()
+    {
+        return $this->_rawURL;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPath()
+    {
+        return $this->_path;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getController()
+    {
+        return $this->_controller;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMethod()
+    {
+        return $this->_method;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getData()
+    {
+        return $this->_data;
+    }
+
+    /**
+     * @return string
+     */
+    public function getProtocol()
+    {
+        return $this->_protocol;
+    }
+}
