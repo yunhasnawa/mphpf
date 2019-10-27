@@ -1,4 +1,7 @@
-# mphpf
+# Mphpf
+
+![alt Mentari PHP Framework](https://raw.githubusercontent.com/yunhasnawa/mphpf/master/static/favicon.png)
+
 The 'M' PHP MVC simple framework.
 
 What is 'M'? In Indonesian language 'M' can be the first letter of many words. For instance: Malang (a city name), Masuk (enter), Mentari (sun), etc.
