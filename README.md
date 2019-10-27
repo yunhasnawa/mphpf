@@ -1,6 +1,6 @@
 # Mphpf
 
-![alt Mentari PHP Framework](https://raw.githubusercontent.com/yunhasnawa/mphpf/master/static/favicon.png)
+![alt Mentari PHP Framework](https://raw.githubusercontent.com/yunhasnawa/mphpf/master/static/favicon300.png)
 
 The 'M' PHP MVC simple framework.
 
