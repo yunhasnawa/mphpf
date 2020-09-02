@@ -1,8 +1,8 @@
 # Mphpf
 
-![alt Mentari PHP Framework](https://raw.githubusercontent.com/yunhasnawa/mphpf/master/static/favicon300.png)
-
 The 'M' PHP MVC simple framework.
+
+![The logo of Mentari PHP Framework](https://raw.githubusercontent.com/yunhasnawa/mphpf/master/static/favicon300.png)
 
 What is 'M'? In Indonesian language 'M' can be the first letter of many words. For instance: Malang (a city name), Masuk (enter), Mentari (sun), etc.
 
@@ -16,3 +16,8 @@ While this framework is not a full-blown framework, it already implements essent
 - Settings
 - Abstract Database Access
 - URL Routing  
+
+### Getting Started
+
+1. Clone or download this repository.
+2. Extract the source code into your webroot/htdocs folder.
