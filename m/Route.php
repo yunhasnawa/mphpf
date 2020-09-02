@@ -17,13 +17,23 @@ class Route
     private $_method;
     private $_data;
 
+    // Parameter-related
+    private $_hasParams;
+    private $_rawParams;
+    private $_pathWithoutParams;
+
     public function __construct(Settings $settings)
     {
         $this->_settings = $settings;
 
+        $this->_hasParams = false;
+        $this->_rawParams = null;
+
         $this->_rootURL = $this->_settings->rootURL();
         $this->_rawURL = $this->_settings->currentURL();
         $this->_routeMetadata = $this->_settings->getRoute();
+
+        $this->_pathWithoutParams = null;
 
         $this->_protocol = self::_currentProtocol(false);
     }
@@ -37,16 +47,20 @@ class Route
 
     public function construct()
     {
-		//echo $this->_rootURL . "<----->" . $this->_rawURL;
-		
+		//pre_print($this->_rootURL . "<----->" . $this->_rawURL);
+		// Hilangkan dulu root url, sehingga bisa dibandingkan path ke controller-nya.
         $this->_path = str_replace($this->_rootURL,'', $this->_rawURL);
+
+        //pre_print($this->_path);
 		
 		if(empty($this->_path))
 			$this->_path = '/';
-		
+
+		// Tambahkan '/' kalau awalnya belum ada karakter tersebut.
 		if($this->_path[0] !== '/')
 			$this->_path = "/{$this->_path}";
 
+		// Ini yang dicari!
         $searchPath = $this->_path;
 
         //echo "Checking path: $searchPath<br/>";
@@ -55,6 +69,16 @@ class Route
 
         $max = count(explode('/', $searchPath));
         //echo "$max<br/>";
+
+        // Check for '?'
+        $stripParams = $this->_handleParameters($searchPath);
+
+        if($stripParams !== null)
+        {
+            $this->_pathWithoutParams = $stripParams;
+
+            $searchPath = $this->_pathWithoutParams;
+        }
 
         for($i = 0; $i < $max; $i++)
         {
@@ -75,6 +99,41 @@ class Route
         $this->_data = self::_extractData($this->_path, $searchPath);
 
         return true;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasParams()
+    {
+        return $this->_hasParams;
+    }
+
+    /**
+     * @return null
+     */
+    public function getRawParams()
+    {
+        return $this->_rawParams;
+    }
+
+
+    private function _handleParameters($path)
+    {
+        $expl = explode('?', $path);
+
+        if(count($expl) >= 2)
+        {
+            $this->_hasParams = true;
+
+            $pathOnly = $expl[0];
+
+            $this->_rawParams = $expl[1];
+
+            return $pathOnly;
+        }
+
+        return null; // Does not have any parameter
     }
 
     private static function _extractData($originalPath, $metadataPath)
@@ -104,7 +163,8 @@ class Route
     {
         foreach($this->_routeMetadata as $r)
         {
-            //echo "{$this->_path}  <-->  {$r[0]}<br/>";
+            //pre_print("{$this->_path}  <-->  {$r[0]}<br/>");
+
             if($path === $r[0])
             {
                 return $r;
@@ -149,11 +209,18 @@ class Route
     }
 
     /**
+     * @param bool $withParams Returns URL with its param or not e.g. http://test.com?q=coba
      * @return mixed
      */
-    public function getPath()
+    public function getPath($withParams = true)
     {
-        return $this->_path;
+        if($withParams)
+            return $this->_path;
+        else
+            if(!$this->hasParams())
+                return $this->_path;
+            else
+                return $this->_pathWithoutParams;
     }
 
     /**
@@ -186,5 +253,14 @@ class Route
     public function getProtocol()
     {
         return $this->_protocol;
+    }
+
+    public function toURL($next = '')
+    {
+        $path = $this->getPath(false);
+
+        $protocol = self::_currentProtocol(true);
+
+        return $protocol . $this->_rootURL . $path . $next;
     }
 }

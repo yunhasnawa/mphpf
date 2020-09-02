@@ -11,9 +11,21 @@ class Settings
     private $_baseTemplate;
     private $_dbConnection;
 
+    // Read only properties
+    private $_absoluteAppFolder;
+
+    /**
+     * @return string
+     */
+    public function getAbsoluteAppFolder()
+    {
+        return $this->_absoluteAppFolder;
+    }
+
     private function __construct()
     {
-        $this->_appFolder = '/';
+        $this->_appFolder = self::_detectAppFolder();
+        $this->_absoluteAppFolder = self::_detectAbsoluteAppFolder();
         $this->_route = array();
         $this->_baseTemplate = 'base_template.php';
         $this->_dbConnection = array(
@@ -24,6 +36,44 @@ class Settings
             'password'     => '',
             'die_on_error' => false
         );
+    }
+
+    private static function _detectAppFolder()
+    {
+        $fileDirname = dirname(__FILE__);
+
+        // TODO: Monitor this change. Might be broken someday
+        // Change \ to / for Windows OS
+        $fileDirname = str_replace('\\', '/', $fileDirname);
+
+        $segments = explode('/', $fileDirname);
+
+        if(count($segments) < 2)
+            return '/';
+
+        $appFolderSegments = (count($segments) - 2);
+
+        $appFolder = "/{$segments[$appFolderSegments]}";
+
+        return $appFolder;
+    }
+
+    private static function _detectAbsoluteAppFolder()
+    {
+        $fileDirname = dirname(__FILE__);
+
+        $segments = explode('/', $fileDirname);
+
+        $lastSegmentIndex = count($segments) - 1;
+
+        if($lastSegmentIndex < 1)
+            return '/';
+
+        unset($segments[$lastSegmentIndex]);
+
+        $absolutePath = implode('/', $segments);
+
+        return $absolutePath;
     }
 
     public static function getInstance()
@@ -53,6 +103,7 @@ class Settings
     }
 
     /**
+     * App Folder will be detectef automatically if this functions doesn't get called
      * @return string
      */
     public function getAppFolder()
@@ -119,6 +170,8 @@ class Settings
     public function rootURL()
     {
         $rootURL = $_SERVER['SERVER_NAME'] . $this->_appFolder;
+
+        //pre_print($rootURL);
 
         return $rootURL;
     }
@@ -210,5 +263,12 @@ class Settings
         $rejoin .= "/$append";
 
         return $rejoin;
+    }
+
+    public function displayError()
+    {
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
     }
 }

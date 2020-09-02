@@ -35,6 +35,51 @@ class View
         return $protocol . $path;
     }
 
+    public function scriptSrc($scriptName)
+    {
+        $url = $this->homeAddress($scriptName);
+
+        $script = <<< PHREDOC
+<script src="$url" type="text/javascript"></script>
+PHREDOC;
+
+        return $script;
+    }
+    
+    public function scriptsSrc()
+    {
+        if(!isset($this->_data['script']))
+            return '';
+
+        $scriptsData = $this->_data['script'];
+        
+        if(is_array($scriptsData))
+            $scripts = $scriptsData;
+        else
+            $scripts = [$scriptsData];
+        
+        $scriptTags = '';
+        
+        foreach ($scripts as $script)
+        {
+            $url = $this->homeAddress($script);
+
+            $scriptTags .= <<< PHREDOC
+<script src="$url" type="text/javascript"></script>
+PHREDOC;
+        }
+        
+        return $scriptTags;
+    }
+
+    public function addScript($script)
+    {
+        if(!isset($this->_data['script']))
+            $this->_data['script'] = array();
+
+        $this->_data['script'][] = $script;
+    }
+
     /**
      * @return array
      */
@@ -46,7 +91,7 @@ class View
     /**
      * @param array $data
      */
-    public function setData($data)
+    public function setData(array $data)
     {
         $this->_data = $data;
     }
@@ -65,6 +110,19 @@ class View
     public function setContentTemplate($contentTemplate)
     {
         $this->_contentTemplate = $contentTemplate;
+    }
+
+    public function modifyData($index, $value)
+    {
+        $this->_data[$index] = $value;
+    }
+
+    public function appendData(array $newValues)
+    {
+        foreach ($newValues as $key => $value)
+        {
+            $this->modifyData($key, $value);
+        }
     }
 
     public function renderContent()
@@ -91,5 +149,13 @@ class View
             echo $this->_data[$index];
         else
             echo $placeholder;
+    }
+
+    public function sessionData($key = null)
+    {
+        if(!Session::getInstance()->exists($key))
+            return null;
+
+        return Session::getInstance()->read($key);
     }
 }
